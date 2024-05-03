@@ -1,7 +1,6 @@
 from environment import Environment
 
 if __name__ == '__main__':
-  environment = Environment(grid_shape=(10, 10))
+  environment = Environment()
   
-  while True:
-    environment.render()
+  environment.render()
