@@ -101,7 +101,6 @@ class Environment(gym.Env):
         pos = (x, y)
         if self._is_empty(pos):
           growth_prob = ((self._n_adjacent_apples(pos) / 8) / 10) * GROWTH_RATE
-          print(growth_prob)
           if rnd.choice([True, False], p=[growth_prob, 1-growth_prob]):
             self._create_apple(pos)
             
