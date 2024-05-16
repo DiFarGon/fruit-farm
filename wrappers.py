@@ -10,3 +10,11 @@ class SingleAgentWrapper(Wrapper):
     super(SingleAgentWrapper, self).__init__(env)
     assert env.n_agents == 1
     self.agent_id = agent_id
+    self.action_space = env.action_space[agent_id]
+
+  def reset(self):
+    return super(SingleAgentWrapper, self).reset()
+  
+  def step(self, action):
+    terminal = super(SingleAgentWrapper, self).step([action])
+    return terminal
