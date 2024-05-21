@@ -13,14 +13,19 @@ from gym.envs.classic_control import rendering
 class Environment(gym.Env):
   
 
-  def __init__(self, grid_shape=(10, 10), n_apples=10, n_agents=0, disaster_prob=0.05, max_steps=100):
+  def __init__(self, grid_shape=(10, 10), n_apples=10, n_agents=0, disaster_prob=0.05, 
+               max_steps=100, step_cost=-0.1, eat_reward=5):
     self._grid_shape = grid_shape
     self._n_step = 0
     self.n_apples = n_apples
     self.disaster_prob = disaster_prob
     self._max_steps = max_steps
+    self._step_cost = step_cost
+    self._eat_reward = eat_reward
 
     self._apple_id_counter = 0
+
+    self.total_episode_reward = None
 
     self.n_agents = n_agents
     self.action_space = MultiAgentActionSpace([spaces.Discrete(5) for _ in range(self.n_agents)])
@@ -34,6 +39,7 @@ class Environment(gym.Env):
   
 
   def reset(self):
+    self.total_episode_reward = [0 for _ in range(self.n_agents)]
     self._n_step = 0
     self.apples = {}
     self.agents = {}
@@ -168,12 +174,15 @@ class Environment(gym.Env):
       self.agents[agent_tag] = new_pos
       self._grid[new_pos[0]][new_pos[1]] = agent_tag
       self._grid[x][y] = 0
+      return 0
     elif self._is_apple(new_pos):
       apple = self._grid[new_pos[0]][new_pos[1]]
       self.agents[agent_tag] = new_pos
       self._grid[new_pos[0]][new_pos[1]] = agent_tag
       self._grid[x][y] = 0
       self._delete_apple(apple)
+      return 1
+    return 0
 
 
   def __draw_base_img(self):
@@ -184,9 +193,17 @@ class Environment(gym.Env):
     if self._n_step >= self._max_steps:
       return self._get_features(), True
     
+    rewards = [self._step_cost for _ in range(self.n_agents)]
+    
     for agent_i, action in enumerate(agents_action):
       agent_tag = self._get_agent_tag(agent_i)
-      self._update_agent_position(agent_tag, action)
+      apple_eaten = self._update_agent_position(agent_tag, action)
+
+      _reward = apple_eaten * self._eat_reward
+      rewards[agent_i] += _reward
+
+    for i in range(self.n_agents):
+      self.total_episode_reward[i] += rewards[i]
 
     self._disaster()
     self._grow_apples()

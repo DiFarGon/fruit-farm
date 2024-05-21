@@ -57,6 +57,8 @@ class GreedyAgent(Agent):
     return closest_apple
 
   def _direction_to(self, pos, target):
+    if target == None:
+      return STAY
     x, y = pos
     tx, ty = target
     if x == tx:
