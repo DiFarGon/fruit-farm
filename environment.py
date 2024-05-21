@@ -11,20 +11,18 @@ from gym.envs.classic_control import rendering
 class Environment(gym.Env):
   
 
-  def __init__(self, grid_shape=(10, 10), n_apples=10, n_agents=1, disaster_prob=0, max_steps=100):
+  def __init__(self, grid_shape=(10, 10), n_apples=10, n_agents=0, disaster_prob=0.05, max_steps=100):
     self._grid_shape = grid_shape
-    self.disaster_prob = disaster_prob
     self._n_step = 0
+    self.n_apples = n_apples
+    self.disaster_prob = disaster_prob
     self._max_steps = max_steps
 
-    self.n_apples = n_apples
     self._apple_id_counter = 0
-    self.apples = {} # {'apple_N': (x, y), etc...}
 
     self.n_agents = n_agents
-    self._agent_id_counter = 0
-    self.agents = {} # {"agent_N":{"pos":(x,y), "score":n}, etc...}
-    self._possible_actions = [1,2,3,4]
+
+    self.apples = {}
 
     self.viewer = rendering.SimpleImageViewer()
 
@@ -39,7 +37,7 @@ class Environment(gym.Env):
       self._create_apple(pos)
 
   
-  def _is_apple(self, pos) -> bool:
+  def _is_apple(self, pos):
     (x, y) = pos
     cell = self._grid[x][y]
     if isinstance(cell, str):
@@ -86,11 +84,11 @@ class Environment(gym.Env):
       if self._is_apple(adjpos):
         n_apples += 1
     return n_apples
-  
+
 
   def _create_apple(self, pos):
     x, y = pos
-    tag = f'apple_{self._apple_id_counter}'
+    tag = f'apple{self._apple_id_counter}'
     if self._grid[x][y] == 0:
       self._grid[x][y] = tag
       self.apples[tag] = pos
@@ -105,63 +103,10 @@ class Environment(gym.Env):
           growth_prob = ((self._n_adjacent_apples(pos) / 8) / 10) * GROWTH_RATE
           if rnd.choice([True, False], p=[growth_prob, 1-growth_prob]):
             self._create_apple(pos)
-
+            
 
   def __draw_base_img(self):
     self._base_img = draw_grid(self._grid_shape[0], self._grid_shape[1], cell_size=CELL_SIZE, fill=CELL_FILL_COLOR)
-
-
-  def _move_agent(self, agent, action):
-    # 1-left, 2-right, 3-up, 4-down
-    x, y = self.agents[agent]["pos"]
-    action_map = {1: (x-1, y), 2: (x+1, y), 3: (x, y-1), 4: (x, y+1)}
-    if action in action_map:
-      self.agents[agent]["pos"] = action_map[action]
-
-
-  def _decide_action(self):
-    # for now it's random
-    return rnd.choice(self._possible_actions)
-  
-
-  def _create_agent(self, pos):
-    x, y = pos
-    tag = f'agent_{self._agent_id_counter}'
-    if self._grid[x][y] == 0:
-      # the third value is the score of the agent (aka how many apples he's eaten)
-      self.agents[tag] = {"pos": [x,y], "score":0}
-      self._agent_id_counter += 1
-
-
-  def _spawn_agents(self):
-    while self._agent_id_counter < self.n_agents:
-      x = np.random.randint(0, self._grid_shape[0])
-      y = np.random.randint(0, self._grid_shape[1])
-      pos = (x, y)
-      self._create_agent(pos)
-    
-
-  def _manage_agents(self):
-    
-    if self._agent_id_counter == 0: # spawn agents if there are none
-      self._spawn_agents()
-
-    else: # else manage them
-      for agent in self.agents:
-        action = self._decide_action()
-
-        # agent can leave the field but when we decide the action properly that shouldn't happen
-        if action in [1,2,3,4]: 
-          self._move_agent(agent, action)
-
-          # check if agent is on the position of an apple and if so, eat it
-          if self._is_apple(self.agents[agent]["pos"]):
-            self.agents[agent]["score"] += 1
-            for apple in self.apples:
-              if self.apples[apple] == self.agents[agent]["pos"]:
-                self._delete_apple(apple)
-                break
-
 
 
   def step(self):
@@ -169,7 +114,6 @@ class Environment(gym.Env):
       return True
     
     self._disaster()
-    self._manage_agents()
     self._grow_apples()
 
     self._n_step += 1
@@ -184,10 +128,6 @@ class Environment(gym.Env):
 
     for apple in self.apples.values():
       draw_circle(img, apple, cell_size=CELL_SIZE, fill=APPLE_COLOR)
-    
-    if self._agent_id_counter != 0:
-      for agent in self.agents.values():
-        draw_circle(img, agent["pos"], cell_size=CELL_SIZE, fill=AGENT_COLOR)
 
     img = np.asarray(img)
     self.viewer.imshow(img)
@@ -195,14 +135,11 @@ class Environment(gym.Env):
     time.sleep(0.5)
     
     return self.viewer.isopen
-  
-
 
 CELL_SIZE = 50
 CELL_FILL_COLOR = 'white'
 
 APPLE_COLOR = 'red'
-AGENT_COLOR = 'blue'
 
 DISASTER_INTENSITY = 0.7
 
