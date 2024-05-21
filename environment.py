@@ -32,6 +32,7 @@ class Environment(gym.Env):
 
     self.apples = {}
     self.agents = {}
+    self._agent_dones = [False for _ in range(self.n_agents)]
 
     self.viewer = rendering.SimpleImageViewer()
 
@@ -49,10 +50,15 @@ class Environment(gym.Env):
   
 
   def _get_features(self):
-    agents = list(self.agents.values())
-    apples = list(self.apples.values())
-    features = [agents, apples]
+    features = []
+    for agent_i, pos in enumerate(self.agents.values()):
+      every_agent = list(self.agents.values())
+      agents = [pos] + every_agent[:agent_i] + every_agent[agent_i+1:]
+      apples = list(self.apples.values())
+      agent_features = [agents, apples]
+      features.append(agent_features)
     return features
+
 
   def _spawn_apples(self):
     while self._apple_id_counter < self.n_apples:
@@ -190,8 +196,7 @@ class Environment(gym.Env):
 
 
   def step(self, agents_action):
-    if self._n_step >= self._max_steps:
-      return self._get_features(), True
+    self._n_step += 1
     
     rewards = [self._step_cost for _ in range(self.n_agents)]
     
@@ -208,9 +213,11 @@ class Environment(gym.Env):
     self._disaster()
     self._grow_apples()
 
-    self._n_step += 1
-
-    return self._get_features(), False
+    if self._n_step >= self._max_steps or not self.apples:
+      for i in range(self.n_agents):
+        self._agent_dones[i] = True
+    
+    return self._get_features(), self._agent_dones
   
 
   def render(self, mode='human'):
