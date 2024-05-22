@@ -31,20 +31,16 @@ class RandomAgent(Agent):
     return rnd.randint(0, self.n_actions)
   
 
-class GreedyAgent(Agent):
+class SeeingAgent(Agent):
 
   def __init__(self, name: str, n_actions: int, n_agents: int):
-    super(GreedyAgent, self).__init__(name)
+    super(SeeingAgent, self).__init__(name)
     self.n_actions = n_actions
     self.n_agents = n_agents
 
-  def action(self) -> int:
-    agents = self.observation[0]
-    apples = self.observation[1]
-    agent_pos = agents[0]
-
-    closest_apple = self._closest_apple(agent_pos, apples)
-    return self._direction_to(agent_pos, closest_apple)
+  def _distance_to_apples(self, pos, apples):
+    distances = [cityblock(pos, apple) for apple in apples]
+    return distances
 
   def _closest_apple(self, pos, apples):
     closest_apple = None
@@ -54,7 +50,7 @@ class GreedyAgent(Agent):
       if distance < closest_distance:
         closest_distance = distance
         closest_apple = apple
-    return closest_apple
+    return closest_apple, closest_distance
 
   def _direction_to(self, pos, target):
     if target == None:
@@ -67,3 +63,42 @@ class GreedyAgent(Agent):
       return DOWN if x < tx else UP
     else:
       return RIGHT if y < ty else LEFT
+
+  
+class GreedyAgent(SeeingAgent):
+
+  def __init__(self, name: str, n_actions: int, n_agents: int):
+    super(GreedyAgent, self).__init__(name, n_actions, n_agents)
+
+  def action(self) -> int:
+    agents = self.observation[0]
+    apples = self.observation[1]
+    agent_pos = agents[0]
+
+    closest_apple, _ = self._closest_apple(agent_pos, apples)
+    return self._direction_to(agent_pos, closest_apple)
+    
+
+class CooperativeAgent(SeeingAgent):
+
+  def __init__(self, name: str, n_actions: int, n_agents: int):
+    super(CooperativeAgent, self).__init__(name, n_actions, n_agents)
+
+  def action(self) -> int:
+    agents = self.observation[0]
+    apples = self.observation[1]
+    agent_pos = agents[0]
+
+    closest_apple, distance = self._closest_apple(agent_pos, apples)
+    while not self._agent_is_closest(closest_apple, agents, apples, distance):
+      apples.remove(closest_apple)
+      closest_apple, distance = self._closest_apple(agent_pos, apples)
+      
+    return self._direction_to(agent_pos, closest_apple)
+  
+  def _agent_is_closest(self, apple_pos, agents, apples, distance):
+    for agent in agents[1:]:
+      other_closest_apple, other_distance = self._closest_apple(agent, apples)
+      if other_closest_apple == apple_pos and distance > other_distance:
+        return False
+    return True

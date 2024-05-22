@@ -6,7 +6,7 @@ import numpy as np
 from environment import Environment
 from wrappers import SingleAgentWrapper
 
-from agents import Agent, GreedyAgent, RandomAgent
+from agents import Agent, CooperativeAgent, GreedyAgent, RandomAgent
 
 def run_single_agent(environment: Env, agent: Agent, n_episodes: int) -> np.ndarray:
   results = np.zeros(n_episodes)
@@ -17,7 +17,8 @@ def run_single_agent(environment: Env, agent: Agent, n_episodes: int) -> np.ndar
     while not terminal:
       agent.see(observations[0])
       action = agent.action()
-      observations, terminal = environment.step(action)
+      observations, terminals = environment.step(action)
+      terminal = terminals[0]
     environment.close()
 
     results[episode] = environment.total_episode_reward[0]
@@ -30,12 +31,16 @@ def run_multi_agent(environment: Env, agents: Sequence[Agent], n_episodes: int) 
   for episode in range(n_episodes):
     terminals = [False for _ in agents]
     observations = environment.reset()
+    environment.render()
+    time.sleep(0.5)
     while not all(terminals):
       for i in range(len(agents)):
         agent = agents[i]
         agent.see(observations[i])
       actions = [agent.action() for agent in agents]
       observations, terminals = environment.step(actions)
+      environment.render()
+      time.sleep(0.5)
     results[episode] = np.sum(environment.total_episode_reward)
     environment.close()
 
@@ -45,8 +50,9 @@ if __name__ == '__main__':
   environment = Environment(n_agents=4, disaster_prob=0.001)
  
   teams = {
-    'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(4)],
-    'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, 4) for i in range(4)]
+    #'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(4)],
+    #'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, 4) for i in range(4)],
+    'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4) for i in range(4)],
   }
 
   results = {}
