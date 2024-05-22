@@ -14,7 +14,7 @@ class Environment(gym.Env):
   
 
   def __init__(self, grid_shape=(10, 10), n_apples=10, n_agents=0, disaster_prob=0.05, 
-               max_steps=100, step_cost=-0.1, eat_reward=5):
+               max_steps=100, step_cost=-0.1, eat_reward=5, starve_steps=5, starve_penalty=-20):
     self._grid_shape = grid_shape
     self._n_step = 0
     self.n_apples = n_apples
@@ -22,6 +22,9 @@ class Environment(gym.Env):
     self._max_steps = max_steps
     self._step_cost = step_cost
     self._eat_reward = eat_reward
+    self._last_ate = None
+    self._starve_steps = starve_steps
+    self._starve_penalty = starve_penalty
 
     self._apple_id_counter = 0
 
@@ -41,6 +44,8 @@ class Environment(gym.Env):
 
   def reset(self):
     self.total_episode_reward = [0 for _ in range(self.n_agents)]
+    self._last_ate = [0 for _ in range(self.n_agents)]
+    self._agent_dones = [False for _ in range(self.n_agents)]
     self._n_step = 0
     self.apples = {}
     self.agents = {}
@@ -55,7 +60,8 @@ class Environment(gym.Env):
       every_agent = list(self.agents.values())
       agents = [pos] + every_agent[:agent_i] + every_agent[agent_i+1:]
       apples = list(self.apples.values())
-      agent_features = [agents, apples]
+      hunger = self._n_step - self._last_ate[agent_i]
+      agent_features = [hunger, agents, apples]
       features.append(agent_features)
     return features
 
@@ -162,8 +168,14 @@ class Environment(gym.Env):
 
   def _get_agent_tag(self, agent_i):
     return f'agent{agent_i}'
+  
 
-  def _update_agent_position(self, agent_tag, action):
+  def _get_agent_index(self, agent_tag):
+    return int(agent_tag[5:])
+  
+
+  def _update_agent_position(self, agent_i, action):
+    agent_tag = self._get_agent_tag(agent_i)
     x, y = self.agents[agent_tag]
     new_pos = None
     if action == DOWN:
@@ -176,6 +188,8 @@ class Environment(gym.Env):
       new_pos = (x, y + 1)
     elif action == STAY:
       new_pos = (x, y)
+    if (x, y) == new_pos:
+      return 0
     if self._is_empty(new_pos):
       self.agents[agent_tag] = new_pos
       self._grid[new_pos[0]][new_pos[1]] = agent_tag
@@ -187,6 +201,7 @@ class Environment(gym.Env):
       self._grid[new_pos[0]][new_pos[1]] = agent_tag
       self._grid[x][y] = 0
       self._delete_apple(apple)
+      self._last_ate[agent_i] = self._n_step
       return 1
     return 0
 
@@ -201,8 +216,13 @@ class Environment(gym.Env):
     rewards = [self._step_cost for _ in range(self.n_agents)]
     
     for agent_i, action in enumerate(agents_action):
-      agent_tag = self._get_agent_tag(agent_i)
-      apple_eaten = self._update_agent_position(agent_tag, action)
+      if self._agent_dones[agent_i]:
+        continue
+      if self._n_step - self._last_ate[agent_i] >= self._starve_steps:
+        _reward = self._starve_penalty
+        self._agent_dones[agent_i] = True
+        continue
+      apple_eaten = self._update_agent_position(agent_i, action)
 
       _reward = apple_eaten * self._eat_reward
       rewards[agent_i] += _reward
@@ -228,8 +248,10 @@ class Environment(gym.Env):
     for apple in self.apples.values():
       draw_circle(img, apple, cell_size=CELL_SIZE, fill=APPLE_COLOR)
 
-    for agent in self.agents.values():
+    for agent_i, agent in enumerate(list(self.agents.values())):
       fill_cell(img, agent, cell_size=CELL_SIZE, fill=AGENT_COLOR)
+      hunger = self._n_step - self._last_ate[agent_i]
+      write_cell_text(img, text=str(hunger), pos=agent, cell_size=CELL_SIZE, fill='white', margin=0.4)
 
     img = np.asarray(img)
     if mode == 'rgb_array':

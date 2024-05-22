@@ -71,8 +71,8 @@ class GreedyAgent(SeeingAgent):
     super(GreedyAgent, self).__init__(name, n_actions, n_agents)
 
   def action(self) -> int:
-    agents = self.observation[0]
-    apples = self.observation[1]
+    agents = self.observation[1]
+    apples = self.observation[2]
     agent_pos = agents[0]
 
     closest_apple, _ = self._closest_apple(agent_pos, apples)
@@ -81,19 +81,23 @@ class GreedyAgent(SeeingAgent):
 
 class CooperativeAgent(SeeingAgent):
 
-  def __init__(self, name: str, n_actions: int, n_agents: int):
+  def __init__(self, name: str, n_actions: int, n_agents: int, max_hunger: int):
     super(CooperativeAgent, self).__init__(name, n_actions, n_agents)
+    self.max_hunger = max_hunger
 
   def action(self) -> int:
-    agents = self.observation[0]
-    apples = self.observation[1]
+    hunger = self.observation[0]
+    agents = self.observation[1]
+    apples = self.observation[2]
     agent_pos = agents[0]
 
     closest_apple, distance = self._closest_apple(agent_pos, apples)
+    if hunger == 0:
+      return STAY
     while not self._agent_is_closest(closest_apple, agents, apples, distance):
       apples.remove(closest_apple)
       closest_apple, distance = self._closest_apple(agent_pos, apples)
-      
+
     return self._direction_to(agent_pos, closest_apple)
   
   def _agent_is_closest(self, apple_pos, agents, apples, distance):
