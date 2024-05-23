@@ -197,13 +197,20 @@ class Environment(gym.Env):
       return 0
     elif self._is_apple(new_pos):
       apple = self._grid[new_pos[0]][new_pos[1]]
+      self._delete_apple(apple)
       self.agents[agent_tag] = new_pos
       self._grid[new_pos[0]][new_pos[1]] = agent_tag
       self._grid[x][y] = 0
-      self._delete_apple(apple)
       self._last_ate[agent_i] = self._n_step
       return 1
     return 0
+  
+
+  def _remove_agent(self, agent_i):
+    agent_tag = self._get_agent_tag(agent_i)
+    x, y = self.agents[agent_tag]
+    self._grid[x][y] = 0
+    self.agents[agent_tag] = None
 
 
   def __draw_base_img(self):
@@ -218,9 +225,10 @@ class Environment(gym.Env):
     for agent_i, action in enumerate(agents_action):
       if self._agent_dones[agent_i]:
         continue
-      if self._n_step - self._last_ate[agent_i] >= self._starve_steps:
+      if self._n_step - self._last_ate[agent_i] > self._starve_steps:
         _reward = self._starve_penalty
         self._agent_dones[agent_i] = True
+        self._remove_agent(agent_i)
         continue
       apple_eaten = self._update_agent_position(agent_i, action)
 
@@ -249,6 +257,8 @@ class Environment(gym.Env):
       draw_circle(img, apple, cell_size=CELL_SIZE, fill=APPLE_COLOR)
 
     for agent_i, agent in enumerate(list(self.agents.values())):
+      if agent is None:
+        continue
       fill_cell(img, agent, cell_size=CELL_SIZE, fill=AGENT_COLOR)
       hunger = self._n_step - self._last_ate[agent_i]
       write_cell_text(img, text=str(hunger), pos=agent, cell_size=CELL_SIZE, fill='white', margin=0.4)

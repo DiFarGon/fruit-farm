@@ -31,19 +31,23 @@ def run_multi_agent(environment: Env, agents: Sequence[Agent], n_episodes: int) 
   for episode in range(n_episodes):
     terminals = [False for _ in agents]
     observations = environment.reset()
+    # environment.render()
+    # time.sleep(1)
     while not all(terminals):
       for i in range(len(agents)):
         agent = agents[i]
         agent.see(observations[i])
       actions = [agent.action() for agent in agents]
       observations, terminals = environment.step(actions)
+      # environment.render()
+      # time.sleep(1)
     results[episode] = np.sum(environment.total_episode_reward)
     environment.close()
 
   return results
 
 if __name__ == '__main__':
-  environment = Environment(n_agents=4, n_apples=50, disaster_prob=0.001)
+  environment = Environment(n_agents=4, n_apples=10, disaster_prob=0.001)
  
   teams = {
     'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(4)],
@@ -57,3 +61,7 @@ if __name__ == '__main__':
     results[team] = result.mean()
 
   print(results)
+
+
+# sacrificial lamb: if apples fall below a threshold, the agent the furthest away
+# from apples will sacrifice itself to feed the others
