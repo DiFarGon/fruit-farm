@@ -9,9 +9,10 @@ from wrappers import SingleAgentWrapper
 from agents import Agent, CooperativeAgent, GreedyAgent, RandomAgent
 
 def run_single_agent(environment: Env, agent: Agent, n_episodes: int) -> np.ndarray:
-  results = np.zeros(n_episodes)
+  results = np.zeros((n_episodes, 2))
 
   for episode in range(n_episodes):
+    steps = 0
     terminal = False
     observations = environment.reset()
     while not terminal:
@@ -19,16 +20,18 @@ def run_single_agent(environment: Env, agent: Agent, n_episodes: int) -> np.ndar
       action = agent.action()
       observations, terminals = environment.step(action)
       terminal = terminals[0]
+      steps += 1
     environment.close()
 
-    results[episode] = environment.total_episode_reward[0]
+    results[episode] = [environment.total_episode_reward[0], steps]
 
   return results
 
 def run_multi_agent(environment: Env, agents: Sequence[Agent], n_episodes: int) -> np.ndarray:
-  results = np.zeros(n_episodes)
+  results = np.zeros((n_episodes, 2))
 
   for episode in range(n_episodes):
+    steps = 0
     terminals = [False for _ in agents]
     observations = environment.reset()
     # environment.render()
@@ -39,9 +42,10 @@ def run_multi_agent(environment: Env, agents: Sequence[Agent], n_episodes: int) 
         agent.see(observations[i])
       actions = [agent.action() for agent in agents]
       observations, terminals = environment.step(actions)
+      steps += 1
       # environment.render()
       # time.sleep(1)
-    results[episode] = np.sum(environment.total_episode_reward)
+    results[episode] = [environment.total_episode_reward[0], steps]
     environment.close()
 
   return results
@@ -51,14 +55,18 @@ if __name__ == '__main__':
  
   teams = {
     'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(4)],
-    'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, 4) for i in range(4)],
-    'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(4)],
+    #'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, 4) for i in range(4)],
+    #'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(4)],
   }
 
   results = {}
   for team, agent in teams.items():
     result = run_multi_agent(environment, agent, 100)
-    results[team] = result.mean()
+    print(result.shape)
+    results[team] = {
+      'reward': result[:, 0].mean(),
+      'steps': result[:, 1].mean()
+    }
 
   print(results)
 

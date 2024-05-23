@@ -13,7 +13,7 @@ from gym.envs.classic_control import rendering
 class Environment(gym.Env):
   
 
-  def __init__(self, grid_shape=(10, 10), n_apples=10, n_agents=0, disaster_prob=0.05, 
+  def __init__(self, grid_shape=(50, 50), n_apples=10, n_agents=0, disaster_prob=0.05, 
                max_steps=100, step_cost=-0.1, eat_reward=5, starve_steps=5, starve_penalty=-20):
     self._grid_shape = grid_shape
     self._n_step = 0
