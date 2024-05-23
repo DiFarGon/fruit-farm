@@ -1,8 +1,10 @@
+import os
 import time
 from typing import Sequence
 from gym import Env
 import numpy as np
 from tqdm import tqdm
+import argparse
 
 from environment import Environment
 from wrappers import SingleAgentWrapper
@@ -57,20 +59,40 @@ def run_multi_agent(environment: Env, agents: Sequence[Agent], n_episodes: int, 
   return results
 
 if __name__ == '__main__':
-  environment = Environment(n_agents=4, n_apples=10, disaster_prob=0.001)
+  parser = argparse.ArgumentParser(description='Run fruit farm simulation')
+  parser.add_argument('--grid_shape', type=int, required=True, help="Grid dimension")
+  parser.add_argument('--n_agents', type=int, required=True, help="Number of agents")
+  parser.add_argument('--n_apples', type=int, required=True, help="Number of apples")
+  parser.add_argument('--disaster_probability', type=float, required=True, help="Disaster probability")
+
+  args = parser.parse_args()
+
+  grid_shape = (args.grid_shape, args.grid_shape)
+  n_agents = args.n_agents
+  n_apples = args.n_apples
+  disaster_probability = args.disaster_probability
+
+  environment = Environment(grid_shape=grid_shape, n_agents=n_agents, n_apples=n_apples, disaster_prob=disaster_probability)
  
   teams = {
-    'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(4)],
-    'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, 4) for i in range(4)],
-    'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(4)],
+    'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(n_agents)],
+    'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, n_agents) for i in range(n_agents)],
+    # 'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(4)],
   }
 
   steps = {}
+  scores = {}
   for team, agent in teams.items():
     result = run_multi_agent(environment, agent, 100, visual=False)
+    scores[team] = result[:, 0]
     steps[team] = result[:, 1]
 
-  compare_results(steps, title='Mean steps per episode', colors=['orange', 'green', 'blue'])
+  path = f'results/grid_shape={grid_shape}:n_agents={n_agents}:n_apples={n_apples}:disaster_probability={disaster_probability}'
+  if not os.path.exists(path):
+    os.makedirs(path)
+  
+  compare_results(steps, title='Mean steps per episode', colors=['orange', 'green'], filename=f'{path}/steps.png')
+  compare_results(scores, title='Mean score per episode', colors=['orange', 'green'], filename=f'{path}/scores.png')
 
 # sacrificial lamb: if apples fall below a threshold, the agent the furthest away
 # from apples will sacrifice itself to feed the others
