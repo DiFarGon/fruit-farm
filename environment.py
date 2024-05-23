@@ -13,7 +13,7 @@ from gym.envs.classic_control import rendering
 class Environment(gym.Env):
   
 
-  def __init__(self, grid_shape=(10, 10), n_apples=10, n_agents=0, disaster_prob=0.05, 
+  def __init__(self, grid_shape=(10, 10), n_apples=10, n_agents=0, disaster_prob=0.05, growth_rate=1,
                max_steps=500, step_cost=-0.1, eat_reward=5, starve_steps=5, starve_penalty=-20):
     self._grid_shape = grid_shape
     self._n_step = 0
@@ -25,6 +25,7 @@ class Environment(gym.Env):
     self._last_ate = None
     self._starve_steps = starve_steps
     self._starve_penalty = starve_penalty
+    self._growth_rate = growth_rate
 
     self._apple_id_counter = 0
 
@@ -161,7 +162,7 @@ class Environment(gym.Env):
       for y in range(self._grid_shape[1]):
         pos = (x, y)
         if self._is_empty(pos):
-          growth_prob = ((self._n_adjacent_apples(pos) / 8) / 10) * GROWTH_RATE
+          growth_prob = ((self._n_adjacent_apples(pos) / 8) / 10) * self._growth_rate
           if rnd.choice([True, False], p=[growth_prob, 1-growth_prob]):
             self._create_apple(pos)
 
@@ -287,7 +288,5 @@ APPLE_COLOR = 'red'
 AGENT_COLOR = 'blue'
 
 DISASTER_INTENSITY = 0.7
-
-GROWTH_RATE = 1
 
 DOWN, LEFT, UP, RIGHT, STAY = range(5)

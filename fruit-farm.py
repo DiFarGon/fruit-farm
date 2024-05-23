@@ -64,6 +64,7 @@ if __name__ == '__main__':
   parser.add_argument('--n_agents', type=int, required=True, help="Number of agents")
   parser.add_argument('--n_apples', type=int, required=True, help="Number of apples")
   parser.add_argument('--disaster_probability', type=float, required=True, help="Disaster probability")
+  parser.add_argument('--growth_rate', type=float, required=True, help="Growth rate")
 
   args = parser.parse_args()
 
@@ -71,8 +72,10 @@ if __name__ == '__main__':
   n_agents = args.n_agents
   n_apples = args.n_apples
   disaster_probability = args.disaster_probability
+  growth_rate = args.growth_rate
 
-  environment = Environment(grid_shape=grid_shape, n_agents=n_agents, n_apples=n_apples, disaster_prob=disaster_probability)
+  environment = Environment(grid_shape=grid_shape, n_agents=n_agents, n_apples=n_apples,
+                            disaster_prob=disaster_probability, growth_rate=growth_rate)
  
   teams = {
     'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(n_agents)],
@@ -87,7 +90,7 @@ if __name__ == '__main__':
     scores[team] = result[:, 0]
     steps[team] = result[:, 1]
 
-  path = f'results/grid_shape={grid_shape}:n_agents={n_agents}:n_apples={n_apples}:disaster_probability={disaster_probability}'
+  path = f'results/grid_shape={grid_shape}:n_agents={n_agents}:n_apples={n_apples}:disaster_probability={disaster_probability}:growth_rate={growth_rate}'
   if not os.path.exists(path):
     os.makedirs(path)
   
