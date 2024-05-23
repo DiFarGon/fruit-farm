@@ -27,15 +27,16 @@ def run_single_agent(environment: Env, agent: Agent, n_episodes: int) -> np.ndar
 
   return results
 
-def run_multi_agent(environment: Env, agents: Sequence[Agent], n_episodes: int) -> np.ndarray:
+def run_multi_agent(environment: Env, agents: Sequence[Agent], n_episodes: int, visual: bool) -> np.ndarray:
   results = np.zeros((n_episodes, 2))
 
   for episode in range(n_episodes):
     steps = 0
     terminals = [False for _ in agents]
     observations = environment.reset()
-    # environment.render()
-    # time.sleep(1)
+    if visual:
+      environment.render()
+      time.sleep(1)
     while not all(terminals):
       for i in range(len(agents)):
         agent = agents[i]
@@ -43,8 +44,9 @@ def run_multi_agent(environment: Env, agents: Sequence[Agent], n_episodes: int) 
       actions = [agent.action() for agent in agents]
       observations, terminals = environment.step(actions)
       steps += 1
-      # environment.render()
-      # time.sleep(1)
+      if visual:
+        environment.render()
+        time.sleep(1)
     results[episode] = [environment.total_episode_reward[0], steps]
     environment.close()
 
@@ -61,8 +63,7 @@ if __name__ == '__main__':
 
   results = {}
   for team, agent in teams.items():
-    result = run_multi_agent(environment, agent, 100)
-    print(result.shape)
+    result = run_multi_agent(environment, agent, 100, visual=False)
     results[team] = {
       'reward': result[:, 0].mean(),
       'steps': result[:, 1].mean()
