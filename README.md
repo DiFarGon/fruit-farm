@@ -8,32 +8,29 @@ This environment consists of a two dimensional grid, with apples placed on it (r
 
 ### Quickstart:
 
-1. Clone the repo
+While in the root directory of the project:
 
-
-    $ git clone https://github.com/DiFarGon/fruit-farm.git
-    
-    $ cd fruit-farm
-
-2. Create virtual environment (tested with python 3.8.2)
+1. Create virtual environment (tested with python 3.8.2)
 
 
     $ python3 -m venv venv
     
     $ source venv/bin/activate
 
-3. Install dependencies (numpy, ma-gym, matplotlib)
+2. Install dependencies (numpy, ma-gym, matplotlib)
 
 
     $ pip install -r requirements.txt
 
-4. Run project
+3. Run project
     In the terminal:
     
     $ python fruit-farm.py --grid_shape 10 --n_agents 4 --n_apples 20 --disaster_probability 0.0 --growth_rate 1
 
    Or with the exe located in scene1/scene1-fruitfarm.exe which contains an example of scene 1 but with 5 episodes per agent type.
 
+To change the composition of the team of agents you want to run, edit line 86 on fruit-farm.py
 
+You can toggle visual mode on and off by defining 'visual=True' or 'visual=False' in line 99 on fruit-farm.py
 
 
