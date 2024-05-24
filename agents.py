@@ -31,6 +31,30 @@ class RandomAgent(Agent):
     return rnd.randint(0, self.n_actions)
   
 
+class NonRedundantRandomAgent(Agent):
+
+  def __init__(self, name: str, n_actions: int, grid_shape: tuple):
+    super(NonRedundantRandomAgent, self).__init__(name)
+    self.n_actions = n_actions
+    self.grid_shape = grid_shape
+
+  def action(self) -> int:
+    agents = self.observation[1]
+    agent_pos = agents[0]
+    if agent_pos == None:
+      return STAY
+    x, y = agent_pos
+    actions = [DOWN, LEFT, UP, RIGHT, STAY]
+    if x == 0:
+      actions.remove(UP)
+    if x == self.grid_shape[0] - 1:
+      actions.remove(DOWN)
+    if y == 0:
+      actions.remove(LEFT)
+    if y == self.grid_shape[1] - 1:
+      actions.remove(RIGHT)
+    return rnd.choice(actions)
+
 class SeeingAgent(Agent):
 
   def __init__(self, name: str, n_actions: int, n_agents: int):
@@ -81,6 +105,12 @@ class GreedyAgent(SeeingAgent):
     return self._direction_to(agent_pos, closest_apple)
     
 
+class ShyAgent(GreedyAgent):
+
+  def init(self, name: str, n_actions: int, n_agents: int):
+    super(GreedyAgent, self).init(name, n_actions, n_agents)
+
+    
 class CooperativeAgent(SeeingAgent):
 
   def __init__(self, name: str, n_actions: int, n_agents: int, max_hunger: int):

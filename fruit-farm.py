@@ -11,7 +11,7 @@ from wrappers import SingleAgentWrapper
 
 from utils import compare_results
 
-from agents import Agent, CooperativeAgent, GreedyAgent, RandomAgent
+from agents import Agent, CooperativeAgent, GreedyAgent, NonRedundantRandomAgent, RandomAgent
 
 def run_single_agent(environment: Env, agent: Agent, n_episodes: int) -> np.ndarray:
   results = np.zeros((n_episodes, 2))
@@ -78,9 +78,10 @@ if __name__ == '__main__':
                             disaster_prob=disaster_probability, growth_rate=growth_rate)
  
   teams = {
-    'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(n_agents)],
+    # 'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(n_agents)],
     'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, n_agents) for i in range(n_agents)],
-    # 'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(4)],
+    # 'non_redudant_random': [NonRedundantRandomAgent(f'non_redundant_random_{i}', environment.action_space[i].n, grid_shape) for i in range(n_agents)],
+    'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(4)],
   }
 
   steps = {}
@@ -94,8 +95,13 @@ if __name__ == '__main__':
   if not os.path.exists(path):
     os.makedirs(path)
   
-  compare_results(steps, title='Mean steps per episode', colors=['orange', 'green'], filename=f'{path}/steps.png')
-  compare_results(scores, title='Mean score per episode', colors=['orange', 'green'], filename=f'{path}/scores.png')
+  teams_id = ''
+  for team in list(teams.keys()):
+    teams_id += team + '-'
+
+  colors = ['green', 'blue', 'orange']
+  compare_results(steps, title='Mean steps per episode', colors=colors, filename=f'{path}/{teams_id}:steps.png')
+  compare_results(scores, title='Mean score per episode', colors=colors, filename=f'{path}/{teams_id}:scores.png')
 
 # sacrificial lamb: if apples fall below a threshold, the agent the furthest away
 # from apples will sacrifice itself to feed the others
