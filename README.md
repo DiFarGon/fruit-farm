@@ -28,8 +28,12 @@ This environment consists of a two dimensional grid, with apples placed on it (r
     $ pip install -r requirements.txt
 
 4. Run project
-
-
+    In the terminal:
+    
     $ python fruit-farm.py --grid_shape 10 --n_agents 4 --n_apples 20 --disaster_probability 0.0 --growth_rate 1
+
+   Or with the exe located in scene1/scene1-fruitfarm.exe which contains an example of scene 1 but with 5 episodes per agent type.
+
+
 
 
