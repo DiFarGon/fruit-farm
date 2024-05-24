@@ -89,7 +89,7 @@ if __name__ == '__main__':
     'non_redudant_random': [NonRedundantRandomAgent(f'non_redundant_random_{i}', environment.action_space[i].n, grid_shape) for i in range(n_agents)],
     'shy': [ShyAgent(f'shy_{i}', environment.action_space[i].n, n_agents) for i in range(n_agents)],
     'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(n_agents)],
-    'cooperative + greedy': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(3)] + [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, n_agents) for i in range(1)],
+    # 'cooperative + greedy': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(3)] + [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, n_agents) for i in range(1)],
   }
 
   steps = {}
