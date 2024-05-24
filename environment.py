@@ -40,6 +40,8 @@ class Environment(gym.Env):
 
     self.viewer = rendering.SimpleImageViewer()
 
+    self._is_shy = False
+
     self._create_grid()
   
 
@@ -57,14 +59,33 @@ class Environment(gym.Env):
 
   def _get_features(self):
     features = []
-    for agent_i, pos in enumerate(self.agents.values()):
-      every_agent = list(self.agents.values())
-      agents = [pos] + every_agent[:agent_i] + every_agent[agent_i+1:]
-      apples = list(self.apples.values())
-      hunger = self._n_step - self._last_ate[agent_i]
-      agent_features = [hunger, agents, apples]
-      features.append(agent_features)
-    return features
+    half_point = int(self._grid_shape[0]/2)
+    if self._is_shy:
+      for agent_i, pos in enumerate(self.agents.values()):
+        every_agent = list(self.agents.values())
+        agents = [pos] + every_agent[:agent_i] + every_agent[agent_i+1:]
+        apples = list(self.apples.values())
+        if agent_i == 0:
+          obs_apples = [apple for apple in apples if apple[0] < half_point and apple[1] < half_point]
+        if agent_i == 1:
+          obs_apples = [apple for apple in apples if apple[0] < half_point and apple[1] >= half_point]
+        if agent_i == 2:
+          obs_apples = [apple for apple in apples if apple[0] >= half_point and apple[1] < half_point]
+        if agent_i == 3:
+          obs_apples = [apple for apple in apples if apple[0] >= half_point and apple[1] >= half_point]
+        hunger = self._n_step - self._last_ate[agent_i]
+        agent_features = [hunger, agents, obs_apples]
+        features.append(agent_features)
+      return features
+    else:
+      for agent_i, pos in enumerate(self.agents.values()):
+        every_agent = list(self.agents.values())
+        agents = [pos] + every_agent[:agent_i] + every_agent[agent_i+1:]
+        apples = list(self.apples.values())
+        hunger = self._n_step - self._last_ate[agent_i]
+        agent_features = [hunger, agents, apples]
+        features.append(agent_features)
+      return features
 
 
   def _spawn_apples(self):
@@ -95,12 +116,20 @@ class Environment(gym.Env):
   
   def _spawn_agents(self):
     agent_id = 0
-    while agent_id < self.n_agents:
-      x = rnd.randint(0, self._grid_shape[0])
-      y = rnd.randint(0, self._grid_shape[1])
-      if self._is_empty((x, y)):       
+    if self._is_shy != None and self._is_shy:
+      half_point = int(self._grid_shape[0]/2)
+      match_pos = {0:(0,0), 1:(0,half_point), 2:(half_point,0), 3:(half_point,half_point)}
+      while agent_id < self.n_agents:
+        x, y = match_pos[agent_id]
         self._spawn_agent((x, y), agent_id)
         agent_id += 1
+    else:
+      while agent_id < self.n_agents:
+        x = rnd.randint(0, self._grid_shape[0])
+        y = rnd.randint(0, self._grid_shape[1])
+        if self._is_empty((x, y)):
+          self._spawn_agent((x, y), agent_id)
+          agent_id += 1
 
   
   def _spawn_agent(self, pos, id):
@@ -279,6 +308,13 @@ class Environment(gym.Env):
     if self.viewer is not None:
       self.viewer.close()
       self.viewer = None
+
+
+  def _make_shy(self):
+    self._is_shy = True
+
+  def _unmake_shy(self):
+    self._is_shy = False
 
 
 CELL_SIZE = 50
