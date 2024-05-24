@@ -84,18 +84,19 @@ if __name__ == '__main__':
                             disaster_prob=disaster_probability, growth_rate=growth_rate)
  
   teams = {
-    # 'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(n_agents)],
-    #'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, n_agents) for i in range(n_agents)],
-    # 'non_redudant_random': [NonRedundantRandomAgent(f'non_redundant_random_{i}', environment.action_space[i].n, grid_shape) for i in range(n_agents)],
+    'random': [RandomAgent(f'random_{i}', environment.action_space[i].n) for i in range(n_agents)],
+    'greedy': [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, n_agents) for i in range(n_agents)],
+    'non_redudant_random': [NonRedundantRandomAgent(f'non_redundant_random_{i}', environment.action_space[i].n, grid_shape) for i in range(n_agents)],
     'shy': [ShyAgent(f'shy_{i}', environment.action_space[i].n, n_agents) for i in range(n_agents)],
-    #'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(4)],
+    'cooperative': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(n_agents)],
+    'cooperative + greedy': [CooperativeAgent(f'cooperative_{i}', environment.action_space[i].n, 4, 5) for i in range(3)] + [GreedyAgent(f'greedy_{i}', environment.action_space[i].n, n_agents) for i in range(1)],
   }
 
   steps = {}
   scores = {}
   for team, agent in teams.items():
     environment._make_shy() if team == "shy" else environment._unmake_shy()
-    result = run_multi_agent(environment, agent, 100, visual=False)
+    result = run_multi_agent(environment, agent, 100, visual=True)
     scores[team] = result[:, 0]
     steps[team] = result[:, 1]
 
