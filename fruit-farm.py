@@ -13,6 +13,12 @@ from utils import compare_results
 
 from agents import Agent, CooperativeAgent, GreedyAgent, NonRedundantRandomAgent, RandomAgent, ShyAgent
 
+def sanitize_path(path):
+    invalid_chars = [":", "=", "(", ")", ","]
+    for char in invalid_chars:
+        path = path.replace(char, "_")
+    return path
+
 def run_single_agent(environment: Env, agent: Agent, n_episodes: int) -> np.ndarray:
   results = np.zeros((n_episodes, 2))
 
@@ -94,6 +100,9 @@ if __name__ == '__main__':
     steps[team] = result[:, 1]
 
   path = f'results/grid_shape={grid_shape}:n_agents={n_agents}:n_apples={n_apples}:disaster_probability={disaster_probability}:growth_rate={growth_rate}'
+  if os.name == 'nt':  # sanitize file path for Windows
+        path = sanitize_path(path)
+
   if not os.path.exists(path):
     os.makedirs(path)
   

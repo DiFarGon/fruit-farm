@@ -1,3 +1,4 @@
 numpy
 ma-gym
 matplotlib
+tqdm
